@@ -453,7 +453,25 @@ elif app_mode == "🏆 Model Performance":
         c1, c2 = st.columns([3, 2])
         with c1:
             st.subheader("📊 Model Comparison Matrix")
-            st.dataframe(comp_df.style.highlight_max(subset=["R2"], color="#dcfce7").highlight_min(subset=["MAE", "RMSE", "MAPE (%)"], color="#dcfce7"), use_container_width=True)
+            # Format numerical metrics cleanly and apply theme-safe high-contrast highlighting
+            styled_comp = (
+                comp_df.copy()
+                .style.format({
+                    "MAE": "{:.3f}",
+                    "RMSE": "{:.3f}",
+                    "MAPE (%)": "{:.2f}%",
+                    "R2": "{:.4f}"
+                })
+                .highlight_min(
+                    subset=["MAE", "RMSE", "MAPE (%)"],
+                    props="background-color: #064e3b; color: #4ade80; font-weight: 700; border-radius: 3px;"
+                )
+                .highlight_max(
+                    subset=["R2"],
+                    props="background-color: #064e3b; color: #4ade80; font-weight: 700; border-radius: 3px;"
+                )
+            )
+            st.dataframe(styled_comp, use_container_width=True)
 
         with c2:
             st.subheader("ℹ️ Metric Interpretation Guide")

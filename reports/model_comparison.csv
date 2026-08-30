@@ -1,6 +1,6 @@
 Model,MAE,RMSE,MAPE (%),R2
-Linear Regression,3.492,4.603,4.41,0.8498
-Gradient Boosting,6.05,8.205,8.09,0.5226
-XGBoost,6.317,8.434,8.4,0.4955
-Random Forest,7.079,9.378,9.31,0.3763
-Decision Tree,8.006,11.119,10.63,0.1233
+Random Forest,4.611,5.768,5.96,0.3201
+Decision Tree,4.697,5.954,6.1,0.2754
+Linear Regression,4.711,5.979,6.04,0.2694
+XGBoost,4.784,5.982,6.14,0.2687
+Gradient Boosting,4.877,6.107,6.27,0.2379
