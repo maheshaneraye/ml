@@ -540,7 +540,7 @@ elif app_mode == "🏆 Model Performance":
                 min_cols = [c for c in comp_df.columns if any(k in c for k in ["MAE", "RMSE", "MAPE"]) and pd.api.types.is_numeric_dtype(comp_df[c])]
                 max_cols = [c for c in comp_df.columns if any(k in c for k in ["R2", "R²"]) and pd.api.types.is_numeric_dtype(comp_df[c])]
                 
-                styled_comp = comp_df.copy().style.format(fmt_dict, na_action="ignore")
+                styled_comp = comp_df.copy().style.format(fmt_dict)
                 if min_cols:
                     styled_comp = styled_comp.highlight_min(
                         subset=min_cols,
@@ -592,7 +592,7 @@ elif app_mode == "🏆 Model Performance":
                 }
                 cls_max_cols = [c for c in cls_comp_df.columns if pd.api.types.is_numeric_dtype(cls_comp_df[c])]
                 
-                styled_cls = cls_comp_df.copy().style.format(cls_fmt_dict, na_action="ignore")
+                styled_cls = cls_comp_df.copy().style.format(cls_fmt_dict)
                 if cls_max_cols:
                     styled_cls = styled_cls.highlight_max(
                         subset=cls_max_cols,
