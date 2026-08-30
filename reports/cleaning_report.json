@@ -1,0 +1,10 @@
+{
+    "initial_row_count": 1212,
+    "final_row_count": 1212,
+    "duplicate_rows_removed": 0,
+    "missing_values_imputed_or_handled": 0,
+    "invalid_attendance_anomalies_fixed": 0,
+    "negative_or_zero_enrollment_rows_removed": 0,
+    "date_parsing_errors": 0,
+    "cleaning_status": "SUCCESS"
+}

@@ -1,0 +1,108 @@
+{
+    "model_name": "Linear Regression",
+    "training_timestamp": "2026-08-29T18:07:21.632839",
+    "target_variable": "Attendance Percentage",
+    "features_used": [
+        "Lecture Number",
+        "Start_Hour",
+        "Semester",
+        "Total Enrolled Students",
+        "Previous Lecture Attendance",
+        "Gap Since Previous Lecture",
+        "Faculty Experience",
+        "Day_of_Semester",
+        "Week_Number",
+        "Days_Since_Holiday",
+        "Daily_Lecture_Sequence",
+        "Rolling_Prev_3_Avg_Attendance",
+        "Macro_Subject_Mean_Attendance",
+        "Macro_Faculty_Mean_Attendance",
+        "Monthly_Avg_Attendance",
+        "Is_Morning",
+        "Is_After_Lunch",
+        "Week_Before_Exam_Flag",
+        "Day of Week",
+        "Subject",
+        "Faculty ID",
+        "Branch",
+        "Section",
+        "Classroom",
+        "Practical/Theory",
+        "Internal Test Week",
+        "Assignment Due",
+        "Holiday Before/After",
+        "Weather",
+        "Special Event",
+        "Time_of_Day",
+        "Lunch_Timing"
+    ],
+    "transformed_feature_count": 80,
+    "validation_metrics": {
+        "MAE": 3.492,
+        "RMSE": 4.603,
+        "MAPE (%)": 4.41,
+        "R2": 0.8498
+    },
+    "test_metrics": {
+        "MAE": 3.937,
+        "RMSE": 4.982,
+        "MAPE (%)": 5.35,
+        "R2": 0.6972
+    },
+    "best_hyperparameters": {
+        "alpha": 0.1,
+        "copy_X": true,
+        "fit_intercept": true,
+        "max_iter": null,
+        "positive": false,
+        "random_state": null,
+        "solver": "auto",
+        "tol": 0.0001
+    },
+    "historical_stats": {
+        "global_baseline": 78.59448019801981,
+        "subject_means": {
+            "Cloud Computing": 75.52480769230769,
+            "Computer Networks": 75.1110294117647,
+            "DBMS Lab": 85.57135135135135,
+            "DSA Lab": 82.98935483870967,
+            "Data Structures & Algorithms": 74.4563768115942,
+            "Database Management Systems": 77.79197278911565,
+            "Discrete Mathematics": 79.0938,
+            "Information Security": 77.35958904109589,
+            "ML Project Lab": 85.74285714285715,
+            "Machine Learning": 77.40722222222222,
+            "Object Oriented Programming": 76.17233333333334,
+            "Operating Systems": 75.65070422535211,
+            "Python Lab": 83.62838709677419,
+            "Python Programming": 75.50604938271604,
+            "Software Engineering": 78.33039215686274,
+            "Web Tech Lab": 85.2351282051282,
+            "Web Technologies": 73.67216216216215
+        },
+        "faculty_means": {
+            "F_001": 78.905,
+            "F_002": 80.39683257918553,
+            "F_003": 75.65070422535211,
+            "F_004": 75.1110294117647,
+            "F_005": 79.60578947368421,
+            "F_006": 78.33039215686274,
+            "F_007": 81.89564102564103,
+            "F_008": 75.52480769230769,
+            "F_009": 77.35958904109589,
+            "F_010": 78.4948854961832,
+            "F_011": 79.0938
+        },
+        "branch_means": {
+            "AI-DS": 78.04091286307055,
+            "CSE": 79.08646341463414,
+            "IT": 77.60875536480687
+        }
+    },
+    "dataset_record_counts": {
+        "total_records": 1212,
+        "train_records": 848,
+        "validation_records": 182,
+        "test_records": 182
+    }
+}

@@ -1,0 +1,6 @@
+Date,Day of Week,Lecture Number,Start Time,Subject,Faculty ID,Semester,Branch,Section,Classroom,Total Enrolled Students,Students Present,Attendance Percentage,Previous Lecture Attendance,Gap Since Previous Lecture,Practical/Theory,Internal Test Week,Assignment Due,Holiday Before/After,Weather,Special Event,Faculty Experience
+01-08-2026,Monday,1,09:00,Python,F_001,5,CSE,A,Room 401,60,51,85.00,82.00,48.0,Theory,No,No,No,Sunny,No,8
+01-08-2026,Monday,2,10:00,DBMS,F_002,5,CSE,A,Room 401,60,49,81.67,78.50,1.0,Theory,No,No,No,Sunny,No,12
+01-08-2026,Monday,3,11:15,Operating Systems,F_003,5,CSE,A,Room 401,60,47,78.33,75.00,1.0,Theory,No,No,No,Sunny,No,5
+01-08-2026,Monday,4,13:00,Python Lab,F_001,5,CSE,A,Lab 1,60,56,93.33,85.00,1.75,Practical,No,No,No,Sunny,No,8
+02-08-2026,Tuesday,1,09:00,Computer Networks,F_004,5,CSE,A,Room 401,60,46,76.67,73.00,24.0,Theory,No,Yes,No,Cloudy,No,6
