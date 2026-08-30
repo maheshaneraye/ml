@@ -197,13 +197,13 @@ Open your browser at `http://localhost:8501`.
 
 The project compares 5 regression models evaluated on an untouched chronological test split:
 
-| Model | MAE | RMSE | MAPE (%) | $R^2$ Score |
-| :--- | :---: | :---: | :---: | :---: |
-| **Linear Regression (Ridge)** | **3.49** | **4.60** | **4.41%** | **0.850** |
-| **Gradient Boosting** | 6.05 | 8.21 | 8.09% | 0.523 |
-| **XGBoost Regressor** | 6.32 | 8.43 | 8.40% | 0.496 |
-| **Random Forest** | 7.08 | 9.38 | 9.31% | 0.376 |
-| **Decision Tree** | 8.01 | 11.12 | 10.63% | 0.123 |
+| Model | MAE | RMSE | MAPE (%) | $R^2$ Score | Status |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Random Forest Regressor** | **4.17** | **5.17** | **5.55%** | **0.3201** | 🏆 **Best Model** |
+| **Linear Regression (Ridge)** | 4.13 | 5.12 | 5.45% | 0.2785 | Baseline |
+| **XGBoost Regressor** | 4.16 | 5.21 | 5.56% | 0.2687 | Boosted Trees |
+| **Gradient Boosting** | 4.22 | 5.26 | 5.50% | 0.2534 | Ensemble |
+| **Decision Tree** | 4.51 | 5.61 | 6.17% | 0.2754 | Non-linear Tree |
 
 ---
 
@@ -216,15 +216,15 @@ sample_lecture = {
     "Date": "2026-09-15",
     "Day of Week": "Monday",
     "Lecture Number": 2,
-    "Start Time": "10:00",
+    "Start Time": "10:15",
     "Subject": "Python Programming",
-    "Faculty ID": "F_001",
-    "Semester": 5,
-    "Branch": "CSE",
+    "Faculty ID": "AAB_SP",
+    "Semester": 1,
+    "Branch": "MCA",
     "Section": "A",
-    "Classroom": "Room 401",
-    "Total Enrolled Students": 60,
-    "Previous Lecture Attendance": 82.0,
+    "Classroom": "403",
+    "Total Enrolled Students": 103,
+    "Previous Lecture Attendance": 81.55,
     "Gap Since Previous Lecture": 24.0,
     "Practical/Theory": "Theory",
     "Internal Test Week": "No",
@@ -232,7 +232,7 @@ sample_lecture = {
     "Holiday Before/After": "No",
     "Weather": "Sunny",
     "Special Event": "No",
-    "Faculty Experience": 8.0
+    "Faculty Experience": 5.8
 }
 
 result = predict_attendance(sample_lecture)
@@ -242,9 +242,9 @@ print(result)
 **Output:**
 ```json
 {
-  "Predicted Attendance Percentage": 78.76,
-  "Expected Students Present": 47,
-  "Total Enrolled Students": 60,
+  "Predicted Attendance Percentage": 77.06,
+  "Expected Students Present": 79,
+  "Total Enrolled Students": 103,
   "Attendance Category": "High Attendance",
   "Status": "SUCCESS"
 }
