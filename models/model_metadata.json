@@ -1,7 +1,7 @@
 {
     "model_name": "Random Forest",
     "best_classifier_name": "Random Forest",
-    "training_timestamp": "2026-08-30T22:12:42.135421",
+    "training_timestamp": "2026-08-30T23:10:01.025383",
     "target_variable": "Attendance Percentage",
     "features_used": [
         "Lecture Number",
