@@ -158,6 +158,32 @@ def load_comparison_data():
     return None
 
 
+@st.cache_data
+def load_classification_data():
+    candidates = [
+        os.path.join("reports", "classification_comparison.csv"),
+        os.path.join("..", "reports", "classification_comparison.csv"),
+        os.path.join("03_Experiment", "model_comparison.xlsx"),
+        os.path.join("..", "03_Experiment", "model_comparison.xlsx")
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            try:
+                if p.endswith(".xlsx"):
+                    return pd.read_excel(p, sheet_name="Classification_Benchmark")
+                else:
+                    return pd.read_csv(p)
+            except Exception:
+                pass
+    return None
+
+
+df = load_dataset()
+metadata = load_metadata()
+comp_df = load_comparison_data()
+cls_comp_df = load_classification_data()
+
+
 # Sidebar Navigation
 st.sidebar.image("https://img.icons8.com/fluency/96/classroom.png", width=70)
 st.sidebar.title("Navigation Menu")
@@ -477,27 +503,6 @@ elif app_mode == "🔮 Predict Attendance":
 
         except Exception as e:
             st.error(f"Prediction failed: {e}. Please ensure models are trained via `python src/train.py`.")
-
-@st.cache_data
-def load_classification_data():
-    candidates = [
-        os.path.join("reports", "classification_comparison.csv"),
-        os.path.join("..", "reports", "classification_comparison.csv"),
-        os.path.join("03_Experiment", "model_comparison.xlsx"),
-        os.path.join("..", "03_Experiment", "model_comparison.xlsx")
-    ]
-    for p in candidates:
-        if os.path.exists(p):
-            try:
-                if p.endswith(".xlsx"):
-                    return pd.read_excel(p, sheet_name="Classification_Benchmark")
-                else:
-                    return pd.read_csv(p)
-            except Exception:
-                pass
-    return None
-
-cls_comp_df = load_classification_data()
 
 # -------------------------------------------------------------
 # TAB 4: MODEL PERFORMANCE
