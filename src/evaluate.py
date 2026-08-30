@@ -273,9 +273,191 @@ def compute_and_plot_permutation_importance(
     plt.ylabel("Feature", fontsize=11, fontweight="bold")
     plt.grid(axis="x", linestyle="--", alpha=0.6)
 
+    return perm_df
+
+
+def calculate_classification_metrics(y_true: np.ndarray, y_pred: np.ndarray, y_prob: Optional[np.ndarray] = None) -> Dict[str, float]:
+    """
+    Computes standard academic classification evaluation metrics:
+    - Accuracy: Overall correct predictions
+    - Precision: Positive predictive value
+    - Recall: Sensitivity / True Positive Rate
+    - F1-Score: Harmonic mean of precision and recall
+    - ROC-AUC: Area under the ROC curve
+    - Specificity: True Negative Rate
+    """
+    from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix
+
+    y_true = np.asarray(y_true).ravel()
+    y_pred = np.asarray(y_pred).ravel()
+
+    acc = float(accuracy_score(y_true, y_pred))
+    prec = float(precision_score(y_true, y_pred, zero_division=0))
+    rec = float(recall_score(y_true, y_pred, zero_division=0))
+    f1 = float(f1_score(y_true, y_pred, zero_division=0))
+
+    roc = 0.5
+    if y_prob is not None:
+        try:
+            roc = float(roc_auc_score(y_true, y_prob))
+        except Exception:
+            roc = 0.5
+    else:
+        try:
+            roc = float(roc_auc_score(y_true, y_pred))
+        except Exception:
+            roc = 0.5
+
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
+    spec = float(tn / (tn + fp)) if (tn + fp) > 0 else 0.0
+
+    return {
+        "Accuracy": round(acc, 4),
+        "Precision": round(prec, 4),
+        "Recall": round(rec, 4),
+        "F1-Score": round(f1, 4),
+        "ROC-AUC": round(roc, 4),
+        "Specificity": round(spec, 4)
+    }
+
+
+def save_classification_comparison_table(
+    results_dict: Dict[str, Dict[str, float]],
+    output_path: str = os.path.join("reports", "classification_comparison.csv")
+) -> pd.DataFrame:
+    """
+    Formats and saves the multi-classifier comparison table.
+    """
+    rows = []
+    for model_name, metrics in results_dict.items():
+        row = {"Classifier": model_name}
+        row.update(metrics)
+        rows.append(row)
+
+    df_comp = pd.DataFrame(rows)
+    df_comp = df_comp.sort_values(by="F1-Score", ascending=False).reset_index(drop=True)
+
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+    df_comp.to_csv(output_path, index=False)
+    logger.info(f"Classification comparison table saved to: {output_path}")
+
+    return df_comp
+
+
+def plot_classification_comparison(
+    comparison_df: pd.DataFrame,
+    output_path: str = os.path.join("reports", "figures", "classification_comparison_metrics.png")
+):
+    """
+    Plots multi-metric bar chart comparing all 7 classification algorithms.
+    """
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+
+    metrics = ["Accuracy", "Precision", "Recall", "F1-Score", "ROC-AUC"]
+    fig, axes = plt.subplots(1, 5, figsize=(22, 5))
+    palette = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2"]
+
+    for i, metric in enumerate(metrics):
+        ax = axes[i]
+        sorted_df = comparison_df.sort_values(by=metric, ascending=False)
+        bars = ax.bar(sorted_df["Classifier"], sorted_df[metric], color=palette[:len(sorted_df)], edgecolor="black", alpha=0.85)
+        ax.set_title(f"{metric} Comparison", fontsize=11, fontweight="bold")
+        ax.set_ylabel(metric, fontsize=10, fontweight="bold")
+        ax.set_ylim(0, 1.05)
+        ax.set_xticklabels(sorted_df["Classifier"], rotation=40, ha="right", fontsize=8)
+        ax.grid(axis="y", linestyle="--", alpha=0.5)
+
+        for bar in bars:
+            height = bar.get_height()
+            ax.annotate(f"{height:.3f}",
+                        xy=(bar.get_x() + bar.get_width() / 2, height),
+                        xytext=(0, 3),
+                        textcoords="offset points",
+                        ha="center", va="bottom", fontsize=8, fontweight="bold")
+
+    plt.suptitle("Classification Benchmark: Identifying At-Risk (<75%) vs. Compliant (>=75%) Attendance", fontsize=14, fontweight="bold", y=1.03)
     plt.tight_layout()
     plt.savefig(output_path, bbox_inches="tight")
     plt.close()
-    logger.info(f"Permutation importance chart saved to: {output_path}")
+    logger.info(f"Classification comparison plot saved to: {output_path}")
 
-    return perm_df
+
+def plot_confusion_matrices(
+    fitted_models: Dict[str, Any],
+    X_val: np.ndarray,
+    y_val: np.ndarray,
+    output_path: str = os.path.join("reports", "figures", "classification_confusion_matrices.png")
+):
+    """
+    Generates a grid of confusion matrices for all fitted classification models.
+    """
+    from sklearn.metrics import confusion_matrix
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+
+    n_models = len(fitted_models)
+    cols = 4
+    rows = (n_models + cols - 1) // cols
+    fig, axes = plt.subplots(rows, cols, figsize=(18, 4.5 * rows))
+    axes = np.array(axes).reshape(-1)
+
+    for idx, (name, model) in enumerate(fitted_models.items()):
+        preds = model.predict(X_val)
+        cm = confusion_matrix(y_val, preds, labels=[0, 1])
+        
+        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False, ax=axes[idx],
+                    xticklabels=["High (>=75%)", "At-Risk (<75%)"],
+                    yticklabels=["High (>=75%)", "At-Risk (<75%)"])
+        axes[idx].set_title(f"{name}", fontsize=11, fontweight="bold")
+        axes[idx].set_ylabel("True Label", fontsize=9)
+        axes[idx].set_xlabel("Predicted Label", fontsize=9)
+
+    for j in range(n_models, len(axes)):
+        axes[j].axis("off")
+
+    plt.suptitle("Confusion Matrices: Attendance Risk Classification on Validation Split", fontsize=14, fontweight="bold", y=1.01)
+    plt.tight_layout()
+    plt.savefig(output_path, bbox_inches="tight")
+    plt.close()
+    logger.info(f"Confusion matrices plot saved to: {output_path}")
+
+
+def plot_roc_curves(
+    fitted_models: Dict[str, Any],
+    X_val: np.ndarray,
+    y_val: np.ndarray,
+    output_path: str = os.path.join("reports", "figures", "classification_roc_curves.png")
+):
+    """
+    Generates ROC Curves for all fitted classifiers.
+    """
+    from sklearn.metrics import roc_curve, auc
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+
+    plt.figure(figsize=(9, 7))
+    plt.plot([0, 1], [0, 1], "k--", lw=1.5, label="Chance (AUC = 0.500)")
+
+    for name, model in fitted_models.items():
+        if hasattr(model, "predict_proba"):
+            probs = model.predict_proba(X_val)[:, 1]
+        elif hasattr(model, "decision_function"):
+            probs = model.decision_function(X_val)
+        else:
+            probs = model.predict(X_val)
+
+        fpr, tpr, _ = roc_curve(y_val, probs)
+        roc_auc = auc(fpr, tpr)
+        plt.plot(fpr, tpr, lw=2, label=f"{name} (AUC = {roc_auc:.3f})")
+
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel("False Positive Rate (1 - Specificity)", fontsize=11, fontweight="bold")
+    plt.ylabel("True Positive Rate (Sensitivity / Recall)", fontsize=11, fontweight="bold")
+    plt.title("Receiver Operating Characteristic (ROC) Benchmark", fontsize=13, fontweight="bold", pad=12)
+    plt.legend(loc="lower right", fontsize=9)
+    plt.grid(True, linestyle="--", alpha=0.6)
+
+    plt.tight_layout()
+    plt.savefig(output_path, bbox_inches="tight")
+    plt.close()
+    logger.info(f"ROC curves plot saved to: {output_path}")
+

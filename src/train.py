@@ -15,6 +15,7 @@ and saves serialization artifacts and experiment logs.
 """
 
 import os
+import sys
 import time
 import json
 import logging
@@ -24,9 +25,15 @@ import pandas as pd
 import numpy as np
 import joblib
 
-from sklearn.linear_model import LinearRegression, Ridge
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+# Add repo root to sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from sklearn.linear_model import LinearRegression, Ridge, LogisticRegression
+from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
 from sklearn.model_selection import GridSearchCV
 
 # XGBoost conditional import
@@ -53,7 +60,12 @@ from src.evaluate import (
     plot_actual_vs_predicted,
     plot_residual_distribution,
     extract_and_plot_feature_importance,
-    compute_and_plot_permutation_importance
+    compute_and_plot_permutation_importance,
+    calculate_classification_metrics,
+    save_classification_comparison_table,
+    plot_classification_comparison,
+    plot_confusion_matrices,
+    plot_roc_curves
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -261,7 +273,62 @@ def train_and_tune_models(
         output_path=os.path.join(reports_dir, "figures", "permutation_importance.png")
     )
 
-    # 10. Persist Model, Preprocessor, and Comprehensive Metadata
+    # 10. Train & Evaluate 7 Classification Algorithms (At-Risk Attendance < 75% vs Compliant >= 75%)
+    logger.info("--> Training and evaluating Classification Algorithms (At-Risk < 75% vs Compliant >= 75%)...")
+    y_train_cls = (y_train < 75.0).astype(int)
+    y_val_cls = (y_val < 75.0).astype(int)
+    y_test_cls = (y_test < 75.0).astype(int)
+
+    cls_definitions = {
+        "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42),
+        "Decision Tree": DecisionTreeClassifier(max_depth=5, random_state=42),
+        "Random Forest": RandomForestClassifier(n_estimators=100, max_depth=6, random_state=42, n_jobs=-1),
+        "SVM (RBF Kernel)": SVC(probability=True, random_state=42),
+        "k-Nearest Neighbors": KNeighborsClassifier(n_neighbors=7),
+        "Naive Bayes (Gaussian)": GaussianNB()
+    }
+    if XGB_AVAILABLE:
+        cls_definitions["XGBoost"] = xgb.XGBClassifier(n_estimators=100, max_depth=4, learning_rate=0.05, random_state=42, eval_metric="logloss")
+
+    fitted_cls_models = {}
+    cls_performance = {}
+
+    for c_name, c_model in cls_definitions.items():
+        logger.info(f"--> Training classifier: {c_name}")
+        c_model.fit(X_train, y_train_cls)
+        fitted_cls_models[c_name] = c_model
+
+        c_preds = c_model.predict(X_val)
+        c_probs = c_model.predict_proba(X_val)[:, 1] if hasattr(c_model, "predict_proba") else c_preds
+        cls_m = calculate_classification_metrics(y_val_cls, c_preds, c_probs)
+        cls_performance[c_name] = cls_m
+        logger.info(f"{c_name} Results -> Accuracy: {cls_m['Accuracy']} | F1: {cls_m['F1-Score']} | ROC-AUC: {cls_m['ROC-AUC']}")
+
+    # Save classification comparison table & plots
+    cls_comp_df = save_classification_comparison_table(
+        cls_performance,
+        output_path=os.path.join(reports_dir, "classification_comparison.csv")
+    )
+    plot_classification_comparison(
+        cls_comp_df,
+        output_path=os.path.join(reports_dir, "figures", "classification_comparison_metrics.png")
+    )
+    plot_confusion_matrices(
+        fitted_cls_models, X_val, y_val_cls,
+        output_path=os.path.join(reports_dir, "figures", "classification_confusion_matrices.png")
+    )
+    plot_roc_curves(
+        fitted_cls_models, X_val, y_val_cls,
+        output_path=os.path.join(reports_dir, "figures", "classification_roc_curves.png")
+    )
+
+    # Save best classifier
+    best_cls_name = cls_comp_df.iloc[0]["Classifier"]
+    best_cls = fitted_cls_models[best_cls_name]
+    joblib.dump(best_cls, os.path.join(models_dir, "best_classifier.pkl"))
+    logger.info(f"=== BEST CLASSIFIER SELECTED: {best_cls_name} ===")
+
+    # 11. Persist Model, Preprocessor, and Comprehensive Metadata
     model_save_path = os.path.join(models_dir, "best_model.pkl")
     preprocessor_save_path = os.path.join(models_dir, "preprocessor.pkl")
     metadata_save_path = os.path.join(models_dir, "model_metadata.json")
@@ -271,12 +338,14 @@ def train_and_tune_models(
 
     metadata = {
         "model_name": best_model_name,
+        "best_classifier_name": best_cls_name,
         "training_timestamp": datetime.now().isoformat(),
         "target_variable": TARGET_COLUMN,
         "features_used": ALL_FEATURE_COLUMNS,
         "transformed_feature_count": int(X_train.shape[1]),
         "validation_metrics": best_val_metrics,
         "test_metrics": best_test_metrics,
+        "best_classification_metrics": cls_performance[best_cls_name],
         "best_hyperparameters": getattr(best_model, "get_params", lambda: {})(),
         "historical_stats": hist_stats,
         "dataset_record_counts": {
@@ -297,9 +366,12 @@ def train_and_tune_models(
     return {
         "best_model_name": best_model_name,
         "best_model": best_model,
+        "best_classifier_name": best_cls_name,
+        "best_classifier": best_cls,
         "preprocessor": preprocessor,
         "metadata": metadata,
         "comparison_df": comp_df,
+        "classification_comparison_df": cls_comp_df,
         "experiment_df": exp_df
     }
 

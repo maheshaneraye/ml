@@ -1,0 +1,8 @@
+Classifier,Accuracy,Precision,Recall,F1-Score,ROC-AUC,Specificity
+Random Forest,0.7452,0.6667,0.7483,0.7051,0.8141,0.743
+Decision Tree,0.7424,0.6667,0.7347,0.699,0.7571,0.7477
+SVM (RBF Kernel),0.7091,0.6167,0.7551,0.6789,0.8058,0.6776
+k-Nearest Neighbors,0.7313,0.6623,0.6939,0.6777,0.7826,0.757
+XGBoost,0.6731,0.5681,0.8231,0.6722,0.8131,0.5701
+Logistic Regression,0.662,0.5556,0.8503,0.672,0.767,0.5327
+Naive Bayes (Gaussian),0.7424,0.8462,0.449,0.5867,0.7912,0.9439

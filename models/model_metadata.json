@@ -1,6 +1,7 @@
 {
     "model_name": "Random Forest",
-    "training_timestamp": "2026-08-30T19:13:47.585855",
+    "best_classifier_name": "Random Forest",
+    "training_timestamp": "2026-08-30T22:12:42.135421",
     "target_variable": "Attendance Percentage",
     "features_used": [
         "Lecture Number",
@@ -48,6 +49,14 @@
         "RMSE": 5.979,
         "MAPE (%)": 6.1,
         "R2": 0.0498
+    },
+    "best_classification_metrics": {
+        "Accuracy": 0.7452,
+        "Precision": 0.6667,
+        "Recall": 0.7483,
+        "F1-Score": 0.7051,
+        "ROC-AUC": 0.8141,
+        "Specificity": 0.743
     },
     "best_hyperparameters": {
         "bootstrap": true,
