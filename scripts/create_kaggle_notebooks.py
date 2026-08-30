@@ -1044,13 +1044,12 @@ print(f" - Attendance Category Band        : {get_band(pred_pct)}")"""),
 
 
 def main():
-    print("Generating Kaggle-ready notebooks...")
-    create_nb(build_nb1(), os.path.join("notebooks", "01_data_cleaning.ipynb"))
-    create_nb(build_nb2(), os.path.join("notebooks", "02_eda.ipynb"))
-    create_nb(build_nb3(), os.path.join("notebooks", "03_feature_engineering.ipynb"))
-    create_nb(build_nb4(), os.path.join("notebooks", "04_model_training.ipynb"))
-    create_nb(build_nb5(), os.path.join("notebooks", "05_model_evaluation.ipynb"))
-    print("[SUCCESS] All 5 Kaggle Notebooks generated successfully in notebooks/!")
+    print("Generating Kaggle-ready notebooks (3 core notebooks)...")
+    for target_folder in ["notebooks", "02_Notebooks"]:
+        create_nb(build_nb2(), os.path.join(target_folder, "01_EDA.ipynb"))
+        create_nb(build_nb3(), os.path.join(target_folder, "02_Feature_Engineering.ipynb"))
+        create_nb(build_nb4(), os.path.join(target_folder, "03_Model_Training.ipynb"))
+    print("[SUCCESS] All 3 Kaggle Notebooks generated successfully in notebooks/ and 02_Notebooks/!")
 
 
 if __name__ == "__main__":
