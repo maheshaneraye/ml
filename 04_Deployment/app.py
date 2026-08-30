@@ -141,10 +141,10 @@ def load_metadata():
 @st.cache_data
 def load_comparison_data():
     candidates = [
-        os.path.join("03_Experiment", "model_comparison.xlsx"),
-        os.path.join("..", "03_Experiment", "model_comparison.xlsx"),
         os.path.join("reports", "model_comparison.csv"),
-        os.path.join("..", "reports", "model_comparison.csv")
+        os.path.join("..", "reports", "model_comparison.csv"),
+        os.path.join("03_Experiment", "model_comparison.xlsx"),
+        os.path.join("..", "03_Experiment", "model_comparison.xlsx")
     ]
     for p in candidates:
         if os.path.exists(p):
@@ -525,23 +525,32 @@ elif app_mode == "🏆 Model Performance":
             c1, c2 = st.columns([3, 2])
             with c1:
                 st.subheader("📊 Regression Models Comparison Matrix")
-                styled_comp = (
-                    comp_df.copy()
-                    .style.format({
-                        "MAE": "{:.3f}",
-                        "RMSE": "{:.3f}",
-                        "MAPE (%)": "{:.2f}%",
-                        "R2": "{:.4f}"
-                    })
-                    .highlight_min(
-                        subset=["MAE", "RMSE", "MAPE (%)"],
+                
+                # Dynamic column format mapping
+                fmt_dict = {}
+                for col in comp_df.columns:
+                    if pd.api.types.is_numeric_dtype(comp_df[col]):
+                        if "(%)" in col:
+                            fmt_dict[col] = "{:.2f}%"
+                        elif "R2" in col or "R²" in col:
+                            fmt_dict[col] = "{:.4f}"
+                        else:
+                            fmt_dict[col] = "{:.3f}"
+                            
+                min_cols = [c for c in comp_df.columns if any(k in c for k in ["MAE", "RMSE", "MAPE"]) and pd.api.types.is_numeric_dtype(comp_df[c])]
+                max_cols = [c for c in comp_df.columns if any(k in c for k in ["R2", "R²"]) and pd.api.types.is_numeric_dtype(comp_df[c])]
+                
+                styled_comp = comp_df.copy().style.format(fmt_dict, na_action="ignore")
+                if min_cols:
+                    styled_comp = styled_comp.highlight_min(
+                        subset=min_cols,
                         props="background-color: #064e3b; color: #4ade80; font-weight: 700; border-radius: 3px;"
                     )
-                    .highlight_max(
-                        subset=["R2"],
+                if max_cols:
+                    styled_comp = styled_comp.highlight_max(
+                        subset=max_cols,
                         props="background-color: #064e3b; color: #4ade80; font-weight: 700; border-radius: 3px;"
                     )
-                )
                 st.dataframe(styled_comp, use_container_width=True)
 
             with c2:
@@ -577,21 +586,18 @@ elif app_mode == "🏆 Model Performance":
             c1, c2 = st.columns([3, 2])
             with c1:
                 st.subheader("🎯 Classification Models Comparison Matrix")
-                styled_cls = (
-                    cls_comp_df.copy()
-                    .style.format({
-                        "Accuracy": "{:.4f}",
-                        "Precision": "{:.4f}",
-                        "Recall": "{:.4f}",
-                        "F1-Score": "{:.4f}",
-                        "ROC-AUC": "{:.4f}",
-                        "Specificity": "{:.4f}"
-                    }, na_action="ignore")
-                    .highlight_max(
-                        subset=[col for col in ["Accuracy", "Precision", "Recall", "F1-Score", "ROC-AUC"] if col in cls_comp_df.columns],
+                
+                cls_fmt_dict = {
+                    c: "{:.4f}" for c in cls_comp_df.columns if pd.api.types.is_numeric_dtype(cls_comp_df[c])
+                }
+                cls_max_cols = [c for c in cls_comp_df.columns if pd.api.types.is_numeric_dtype(cls_comp_df[c])]
+                
+                styled_cls = cls_comp_df.copy().style.format(cls_fmt_dict, na_action="ignore")
+                if cls_max_cols:
+                    styled_cls = styled_cls.highlight_max(
+                        subset=cls_max_cols,
                         props="background-color: #064e3b; color: #4ade80; font-weight: 700; border-radius: 3px;"
                     )
-                )
                 st.dataframe(styled_cls, use_container_width=True)
 
             with c2:
