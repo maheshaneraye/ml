@@ -1,0 +1,6 @@
+Model,Val MAE,Val RMSE,Val MAPE (%),Val R2,Test MAE,Test RMSE,Test MAPE (%),Test R2
+Linear Regression,4.13,5.125,5.41,0.4633,4.136,5.21,5.45,0.2785
+XGBoost,4.156,5.21,5.4,0.4452,4.267,5.347,5.56,0.2401
+Random Forest,4.17,5.17,5.44,0.4538,4.248,5.374,5.55,0.2323
+Gradient Boosting,4.217,5.258,5.48,0.435,4.224,5.3,5.5,0.2534
+Decision Tree,4.506,5.608,5.84,0.3574,4.773,6.091,6.17,0.0139

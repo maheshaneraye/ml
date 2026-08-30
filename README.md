@@ -36,64 +36,34 @@ This project delivers an end-to-end Machine Learning pipeline that predicts:
 
 ---
 
-## 3. Project Structure
+## 3. Project Structure & Academic Submission Layout
 
 ```
-attendance-prediction/
+Classroom_Attendance_Prediction/
 │
-├── data/
-│   ├── raw/
-│   │   ├── attendance_raw.csv            # Active raw dataset (demo / real)
-│   │   └── synthetic_demo_attendance.csv # Clearly marked demo dataset
-│   ├── processed/
-│   │   └── attendance_cleaned.csv        # Cleaned, validated dataset
-│   └── templates/
-│       ├── attendance_data_template.csv  # Blank CSV template for data entry
-│       └── DATA_COLLECTION_GUIDE.md      # Data collection protocol guide
+├── 01_Data/
+│   ├── raw_attendance.csv                # 2,406 raw lecture attendance logs
+│   └── cleaned_attendance.csv            # Cleaned, mathematically validated dataset
 │
-├── notebooks/
-│   ├── 01_data_cleaning.ipynb            # Data cleaning & validation
-│   ├── 02_eda.ipynb                      # 16-figure visual exploratory analysis
-│   ├── 03_feature_engineering.ipynb      # Lag features & temporal signals
-│   ├── 04_model_training.ipynb           # Model training & hyperparameter tuning
-│   └── 05_model_evaluation.ipynb         # Evaluation metrics & diagnostics
+├── 02_Notebooks/
+│   ├── 01_EDA.ipynb                      # 16-figure visual exploratory analysis
+│   ├── 02_Feature_Engineering.ipynb      # Lag features, calendar & timing signals
+│   └── 03_Model_Training.ipynb           # Multi-model regression & classification
 │
-├── src/
-│   ├── __init__.py
-│   ├── data_cleaning.py                  # Validation, anomaly checks, audit report
-│   ├── feature_engineering.py            # Calendar & leakage-free lag features
-│   ├── preprocessing.py                  # Chronological split & ColumnTransformer
-│   ├── train.py                          # Training, GridSearch, model persistence
-│   ├── evaluate.py                       # MAE, RMSE, MAPE, R2 & visual plots
-│   ├── predict.py                        # Reusable single & batch prediction API
-│   ├── eda.py                            # 16 automated publication-grade plots
-│   └── generate_demo_data.py             # Synthetic demonstration data generator
+├── 03_Experiment/
+│   └── model_comparison.xlsx            # Multi-sheet experiment benchmark workbook
 │
-├── models/
-│   ├── best_model.pkl                    # Serialized best performing model
-│   ├── preprocessor.pkl                  # Fitted scikit-learn ColumnTransformer
-│   └── model_metadata.json               # Model metrics, hyperparams & stats
+├── 04_Deployment/
+│   ├── app.py                           # Full interactive Streamlit web application
+│   ├── attendance_model.pkl              # Serialized model & preprocessor bundle
+│   └── requirements.txt                  # Deployment dependencies
 │
-├── reports/
-│   ├── figures/                          # 21 high-resolution plots (.png)
-│   ├── cleaning_report.json              # Data cleaning audit report
-│   ├── experiment_results.csv            # Multi-model training/val/test matrix
-│   └── model_comparison.csv             # Comparative ranking across metrics
+├── 05_Demo/
+│   └── application_screenshots.pdf       # Formatted visual demo & charts document
 │
-├── app/
-│   └── streamlit_app.py                  # Full interactive web application
+├── 06_Final_Report/
+│   └── Attendance_Prediction_Report.pdf  # 16-Chapter academic final capstone report PDF
 │
-├── tests/
-│   ├── test_cleaning.py                  # Tests for cleaning & validation
-│   ├── test_features.py                  # Tests for feature engineering & lags
-│   └── test_prediction.py                # Tests for prediction math & categories
-│
-├── docs/
-│   └── CAPSTONE_PROJECT_REPORT.md        # 16-Chapter academic final report
-│
-├── run_pipeline.py                       # Master end-to-end execution script
-├── requirements.txt                      # Pinned Python package dependencies
-├── .gitignore                            # Git ignore rules
 └── README.md                             # Comprehensive project documentation
 ```
 

@@ -1,9 +1,9 @@
 """
-Kaggle Notebook Generator - Robust Complete Implementation
-==========================================================
-Generates 5 standalone, Kaggle-ready Jupyter Notebooks (.ipynb)
-with smart Kaggle path detection, leakage-free feature engineering,
-regression & classification benchmarks, and comprehensive documentation.
+Kaggle Notebook Generator - Self-Contained Bulletproof Implementation
+====================================================================
+Generates 5 standalone, Kaggle-ready Jupyter Notebooks (.ipynb).
+Each notebook includes all necessary imports at the top of every cell
+and handles automatic data discovery + fallback feature construction.
 """
 
 import os
@@ -56,8 +56,13 @@ def code(source):
     }
 
 
-# Standard smart path auto-discovery code snippet
-PATH_DISCOVERY_SNIPPET = """def find_data_file(filename="attendance_raw.csv"):
+PATH_DISCOVERY_SNIPPET = """import os
+import sys
+import json
+import pandas as pd
+import numpy as np
+
+def find_data_file(filename="attendance_raw.csv"):
     \"\"\"
     Auto-discovers datasets and model artifacts in Kaggle input/working directories
     or local relative repository folders.
@@ -614,6 +619,7 @@ This notebook trains, tunes, and evaluates a comprehensive benchmark of **Regres
 
         md("### 1. Library Imports"),
         code("""import os
+import sys
 import json
 import joblib
 import pandas as pd
@@ -647,14 +653,75 @@ except ImportError:
 
 print("All modeling libraries loaded successfully.")"""),
 
-        md("### 2. Load Engineered Datasets"),
+        md("""### 2. Dataset Auto-Discovery & Loading (With Fallback Pipeline)
+This cell automatically finds pre-engineered splits (`train_engineered.csv`, etc.). If not found (e.g. running in a fresh Kaggle session), it seamlessly builds features directly from the attendance dataset!"""),
         code(PATH_DISCOVERY_SNIPPET + """
 
-train_df = pd.read_csv(find_data_file("train_engineered.csv"))
-val_df = pd.read_csv(find_data_file("val_engineered.csv"))
-test_df = pd.read_csv(find_data_file("test_engineered.csv"))
+def load_or_build_splits():
+    try:
+        train_p = find_data_file("train_engineered.csv")
+        val_p = find_data_file("val_engineered.csv")
+        test_p = find_data_file("test_engineered.csv")
+        print(f"Loaded existing engineered splits from disk.")
+        return pd.read_csv(train_p), pd.read_csv(val_p), pd.read_csv(test_p)
+    except Exception as e:
+        print(f"[INFO] Pre-engineered splits not found ({e}). Auto-constructing features from raw dataset...")
+        try:
+            raw_path = find_data_file("attendance_cleaned.csv")
+        except:
+            raw_path = find_data_file("attendance_raw.csv")
+            
+        df_in = pd.read_csv(raw_path)
+        
+        # Build timing & calendar signals
+        def parse_hour(time_str):
+            try:
+                s = str(time_str).strip().lower()
+                if ":" in s:
+                    parts = s.split(":")
+                    return float(parts[0]) + float(parts[1][:2]) / 60.0
+                return float(s)
+            except:
+                return 9.0
+                
+        df_in["Start_Hour"] = df_in["Start Time"].apply(parse_hour)
+        conditions = [(df_in["Start_Hour"] < 12.0), (df_in["Start_Hour"] >= 12.0) & (df_in["Start_Hour"] < 16.5), (df_in["Start_Hour"] >= 16.5)]
+        df_in["Time_of_Day"] = np.select(conditions, ["Morning", "Afternoon", "Evening"], default="Morning")
+        df_in["Is_Morning"] = (df_in["Start_Hour"] < 12.0).astype(int)
+        df_in["Lunch_Timing"] = np.where((df_in["Start_Hour"] >= 13.0) | (df_in["Lecture Number"] >= 4), "After Lunch", "Before Lunch")
+        df_in["Is_After_Lunch"] = (df_in["Lunch_Timing"] == "After Lunch").astype(int)
+        
+        df_in["Date_DT"] = pd.to_datetime(df_in["Date"], errors="coerce")
+        min_date = df_in["Date_DT"].min()
+        df_in["Day_of_Semester"] = (df_in["Date_DT"] - min_date).dt.days + 1
+        df_in["Week_Number"] = ((df_in["Day_of_Semester"] - 1) // 7) + 1
+        df_in["Week_Number"] = df_in["Week_Number"].clip(lower=1, upper=16)
+        df_in["Days_Since_Holiday"] = np.where(df_in["Holiday Before/After"] == "Yes", 1, 7)
+        df_in["Week_Before_Exam_Flag"] = np.where(df_in["Internal Test Week"] == "Yes", 1, 0)
+        
+        df_in = df_in.sort_values(by=["Date_DT", "Start_Hour", "Lecture Number"]).reset_index(drop=True)
+        df_in["Daily_Lecture_Sequence"] = df_in.groupby(["Date", "Branch", "Section"]).cumcount() + 1
+        
+        df_in["Rolling_Prev_3_Avg_Attendance"] = (
+            df_in.groupby(["Subject", "Branch", "Section"])["Attendance Percentage"]
+            .transform(lambda s: s.shift(1).rolling(window=3, min_periods=1).mean())
+        )
+        global_mean = df_in["Attendance Percentage"].mean()
+        df_in["Rolling_Prev_3_Avg_Attendance"] = df_in["Rolling_Prev_3_Avg_Attendance"].fillna(df_in["Previous Lecture Attendance"]).fillna(global_mean)
+        
+        sub_means = df_in.groupby("Subject")["Attendance Percentage"].mean().to_dict()
+        fac_means = df_in.groupby("Faculty ID")["Attendance Percentage"].mean().to_dict()
+        df_in["Macro_Subject_Mean_Attendance"] = df_in["Subject"].map(sub_means).fillna(global_mean)
+        df_in["Macro_Faculty_Mean_Attendance"] = df_in["Faculty ID"].map(fac_means).fillna(global_mean)
+        df_in["Monthly_Avg_Attendance"] = global_mean
+        df_in = df_in.drop(columns=["Date_DT"])
+        
+        n = len(df_in)
+        t_end, v_end = int(n * 0.70), int(n * 0.85)
+        return df_in.iloc[:t_end].copy().reset_index(drop=True), df_in.iloc[t_end:v_end].copy().reset_index(drop=True), df_in.iloc[v_end:].copy().reset_index(drop=True)
 
-print(f"Loaded: Train={len(train_df)}, Val={len(val_df)}, Test={len(test_df)}")"""),
+train_df, val_df, test_df = load_or_build_splits()
+print(f"Data Partitions Ready: Train={len(train_df)}, Val={len(val_df)}, Test={len(test_df)}")"""),
 
         md("""### 3. Feature Definitions & Scikit-Learn Preprocessing Pipeline
 We explicitly define our input feature space, ensuring `Attendance Percentage` and `Students Present` are never passed as inputs."""),
@@ -816,6 +883,7 @@ This notebook performs out-of-sample test evaluation, residual error diagnostics
 
         md("### 1. Library Imports"),
         code("""import os
+import sys
 import json
 import joblib
 import pandas as pd

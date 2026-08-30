@@ -80,25 +80,54 @@ def predict_attendance(
     else:
         raise ValueError("input_data must be a dict, list of dicts, or pandas DataFrame.")
 
-    # 2. Check model artifacts existence
-    if not os.path.exists(model_path) or not os.path.exists(preprocessor_path):
-        raise FileNotFoundError(
-            f"Trained model artifacts not found at {model_path} / {preprocessor_path}. "
-            "Please train the model first using `python src/train.py`."
-        )
-
-    # 3. Load artifacts
-    model = joblib.load(model_path)
-    preprocessor = joblib.load(preprocessor_path)
-
+    # 2. Check model artifacts existence with smart fallback
+    model = None
+    preprocessor = None
     historical_stats = {}
-    if os.path.exists(metadata_path):
-        try:
-            with open(metadata_path, "r", encoding="utf-8") as f:
-                meta = json.load(f)
-                historical_stats = meta.get("historical_stats", {})
-        except Exception as e:
-            logger.warning(f"Could not load metadata: {e}")
+
+    # Check candidate model bundle paths
+    bundle_candidates = [
+        "attendance_model.pkl",
+        os.path.join("04_Deployment", "attendance_model.pkl"),
+        os.path.join("..", "04_Deployment", "attendance_model.pkl")
+    ]
+    for bp in bundle_candidates:
+        if os.path.exists(bp):
+            try:
+                bundle = joblib.load(bp)
+                if isinstance(bundle, dict) and "model" in bundle and "preprocessor" in bundle:
+                    model = bundle["model"]
+                    preprocessor = bundle["preprocessor"]
+                    historical_stats = bundle.get("metadata", {}).get("historical_stats", {})
+                    break
+            except Exception:
+                pass
+
+    if model is None:
+        model_candidates = [model_path, os.path.join("..", model_path)]
+        prep_candidates = [preprocessor_path, os.path.join("..", preprocessor_path)]
+        
+        m_file = next((p for p in model_candidates if os.path.exists(p)), None)
+        p_file = next((p for p in prep_candidates if os.path.exists(p)), None)
+        
+        if m_file and p_file:
+            model = joblib.load(m_file)
+            preprocessor = joblib.load(p_file)
+            
+            meta_candidates = [metadata_path, os.path.join("..", metadata_path)]
+            meta_file = next((p for p in meta_candidates if os.path.exists(p)), None)
+            if meta_file:
+                try:
+                    with open(meta_file, "r", encoding="utf-8") as f:
+                        meta = json.load(f)
+                        historical_stats = meta.get("historical_stats", {})
+                except Exception as e:
+                    logger.warning(f"Could not load metadata: {e}")
+        else:
+            raise FileNotFoundError(
+                f"Trained model artifacts not found at {model_path} / {preprocessor_path}. "
+                "Please train the model first using `python src/train.py`."
+            )
 
     # 4. Fill required baseline defaults if missing in inference input
     defaults = {
